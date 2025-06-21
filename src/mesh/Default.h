@@ -23,9 +23,9 @@
 #define min_neighbor_info_broadcast_secs 4 * 60 * 60
 #define default_map_publish_interval_secs 60 * 60
 
-#define default_mqtt_address "mqtt.meshtastic.org"
-#define default_mqtt_username "meshdev"
-#define default_mqtt_password "large4cats"
+#define default_mqtt_address "mqtt.aperturelab.cz"
+#define default_mqtt_username "meshuser"
+#define default_mqtt_password "meshpass"
 #define default_mqtt_root "msh"
 #define default_mqtt_encryption_enabled true
 #define default_mqtt_tls_enabled false
