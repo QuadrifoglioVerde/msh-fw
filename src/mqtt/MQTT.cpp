@@ -772,7 +772,8 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
 
 void MQTT::perhapsReportToMap()
 {
-    if (!moduleConfig.mqtt.map_reporting_enabled || !(moduleConfig.mqtt.proxy_to_client_enabled || isConnectedDirectly()))
+    if (!moduleConfig.mqtt.map_reporting_enabled || !moduleConfig.mqtt.map_report_settings.should_report_location ||
+        !(moduleConfig.mqtt.proxy_to_client_enabled || isConnectedDirectly()))
         return;
 
     // Coerce the map position precision to be within the valid range
