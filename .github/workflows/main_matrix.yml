@@ -173,7 +173,7 @@ jobs:
           name: firmware-${{matrix.arch}}-${{ steps.version.outputs.long }}
           overwrite: true
           path: |
-            ./firmware-*.bin
+            ./firmware-*-update.bin
             ./firmware-*.uf2
             ./firmware-*.hex
             ./firmware-*-ota.zip
