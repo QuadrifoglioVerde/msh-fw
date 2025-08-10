@@ -4,6 +4,25 @@ concurrency:
   cancel-in-progress: true
 on:
   # # Triggers the workflow on push but only for the master branch
+  push:
+    branches:
+      - master
+      - develop
+      - event/*
+    paths-ignore:
+      - "**.md"
+      - version.properties
+
+  # Note: This is different from "pull_request". Need to specify ref when doing checkouts.
+  pull_request_target:
+    branches:
+      - master
+      - develop
+      - event/*
+    paths-ignore:
+      - "**.md"
+      #- "**.yml"
+
   workflow_dispatch:
 
 jobs:
@@ -177,6 +196,7 @@ jobs:
     secrets: inherit
 
   test-native:
+    if: ${{ !contains(github.ref_name, 'event/') }}
     uses: ./.github/workflows/test_native.yml
 
   gather-artifacts:
@@ -280,7 +300,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event_name == 'workflow_dispatch' }}
     env:
-      targets: esp32,esp32s3,esp32c3,esp32c6,nrf52840,rp2040,stm32
+      targets: esp32,esp32s3,esp32c3,esp32c6,nrf52840,rp2040,rp2350,stm32
     needs:
       - gather-artifacts
     steps:
@@ -299,7 +319,7 @@ jobs:
       - name: Download firmware artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: firmware-{${{ env.targets }}}-${{ needs.version.outputs.long }}
+          pattern: firmware-{${{ env.targets }}}-${{ steps.version.outputs.long }}
           merge-multiple: true
           path: ./publish
 
@@ -312,9 +332,9 @@ jobs:
           external_repository: QuadrifoglioVerde/msh-fw-release
           publish_branch: main
           publish_dir: ./publish
-          destination_dir: ${{ env.DEST_PREFIX }}firmware-${{ needs.version.outputs.long }}
+          destination_dir: ${{ env.DEST_PREFIX }}firmware-${{ steps.version.outputs.long }}
           keep_files: true
           user_name: github-actions[bot]
           user_email: github-actions[bot]@users.noreply.github.com
-          commit_message: ${{ needs.version.outputs.long }}
+          commit_message: ${{ steps.version.outputs.long }}
           enable_jekyll: true
