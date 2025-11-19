@@ -79,7 +79,7 @@ jobs:
         check: ${{ fromJson(needs.setup.outputs.check) }}
 
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' && github.repository == 'meshtastic/firmware' }}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v5
       - name: Build base
@@ -100,23 +100,15 @@ jobs:
       pio_env: ${{ matrix.build.board }}
       platform: ${{ matrix.build.platform }}
 
-  build-debian-src:
-    if: github.repository == 'meshtastic/firmware'
-    uses: ./.github/workflows/build_debian_src.yml
-    with:
-      series: UNRELEASED
-      build_location: local
-    secrets: inherit
-
   package-pio-deps-native-tft:
-    if: ${{ github.repository == 'meshtastic/firmware' && github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/package_pio_deps.yml
     with:
       pio_env: native-tft
     secrets: inherit
 
   test-native:
-    if: ${{ !contains(github.ref_name, 'event/') && github.repository == 'meshtastic/firmware' }}
+    if: ${{ !contains(github.ref_name, 'event/') }}
     uses: ./.github/workflows/test_native.yml
 
   gather-artifacts:
@@ -227,7 +219,7 @@ jobs:
         id: version
 
       - name: Download firmware artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: firmware-{${{ env.targets }}}-${{ steps.version.outputs.long }}
           merge-multiple: true
