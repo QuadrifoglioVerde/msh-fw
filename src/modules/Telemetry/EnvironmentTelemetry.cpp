@@ -352,6 +352,14 @@ int32_t EnvironmentTelemetryModule::runOnce()
             airTime->isTxAllowedAirUtil()) {
             sendTelemetry();
             lastSentToMesh = millis();
+            lastSentToMqtt = millis();
+        } else if ((Throttle::isWithinTimespanMs(lastSentToMesh, Default::getConfiguredOrDefaultMsScaled(
+                                                               moduleConfig.telemetry.environment_update_interval,
+                                                               default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
+                   (!Throttle::isWithinTimespanMs(lastSentToMqtt, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
+                                                                   default_telemetry_broadcast_interval_secs)))) {
+            sendTelemetry(NODENUM_BROADCAST_NO_LORA); // Send to MQTT only
+            lastSentToMqtt = millis();
         } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
             // Just send to phone when it's not our time to send to mesh yet
