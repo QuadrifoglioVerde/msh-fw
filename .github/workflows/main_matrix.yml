@@ -157,11 +157,8 @@ jobs:
           name: firmware-${{matrix.arch}}-${{ needs.version.outputs.long }}
           overwrite: true
           path: |
-            ./firmware-*.mt.json
             ./firmware-*.bin
-            ./firmware-*-update.bin
             ./firmware-*.uf2
-            ./firmware-*.hex
             ./firmware-*.zip
             ./device-*.sh
             ./device-*.bat
