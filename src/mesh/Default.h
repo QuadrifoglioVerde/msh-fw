@@ -34,9 +34,9 @@
 #endif
 #define default_network_ipv6_enabled false
 
-#define default_mqtt_address "mqtt.meshtastic.org"
-#define default_mqtt_username "meshdev"
-#define default_mqtt_password "large4cats"
+#define default_mqtt_address "mqtt.aperturelab.cz"
+#define default_mqtt_username "meshuser"
+#define default_mqtt_password "meshpass"
 #define default_mqtt_root "msh"
 #define default_mqtt_encryption_enabled true
 #define default_mqtt_tls_enabled false
