@@ -332,9 +332,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
             sendTelemetry();
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY);
-                
             lastSentToMqtt = millis();
-        } else if ((Throttle::isWithinTimespanMs(lastSentToMesh, Default::getConfiguredOrDefaultMsScaled(
+        } else if ((Throttle::isWithinTimespanMs(lastTelemetry, Default::getConfiguredOrDefaultMsScaled(
                                                                moduleConfig.telemetry.environment_update_interval,
                                                                default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
                    (!Throttle::isWithinTimespanMs(lastSentToMqtt, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
