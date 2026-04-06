@@ -117,6 +117,10 @@ jobs:
 
   test-native:
     if: ${{ !contains(github.ref_name, 'event/') }}
+    permissions: # Needed for dorny/test-reporter.
+      contents: read
+      actions: read
+      checks: write
     uses: ./.github/workflows/test_native.yml
 
   gather-artifacts:
