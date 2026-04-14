@@ -31,7 +31,13 @@ bool INA260Sensor::getMetrics(meshtastic_Telemetry *measurement)
 
     // mV conversion to V
     measurement->variant.environment_metrics.voltage = ina260.readBusVoltage() / 1000;
-    measurement->variant.environment_metrics.current = ina260.readCurrent();
+    
+    #if CELL_TYPE_LTO
+      measurement->variant.environment_metrics.current = -ina260.readCurrent();
+    #else
+      measurement->variant.environment_metrics.current = ina260.readCurrent();
+    #endif
+
     return true;
 }
 
