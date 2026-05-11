@@ -293,7 +293,7 @@ bool initWifi()
             if (config.network.address_mode == meshtastic_Config_NetworkConfig_AddressMode_STATIC &&
                 config.network.ipv4_config.ip != 0) {
 #ifdef ARCH_ESP32
-                WiFi.config(config.network.ipv4_config.ip, config.network.ipv4_config.gateway, config.network.ipv4_config.subnet,
+                WiFi.config(config.network.ipv4_config.ip, config.network.ipv4_config.gateway, IPAddress(255, 255, 255, 0),
                             config.network.ipv4_config.dns);
 #elif defined(ARCH_RP2040)
                 WiFi.config(config.network.ipv4_config.ip, config.network.ipv4_config.dns, config.network.ipv4_config.gateway,

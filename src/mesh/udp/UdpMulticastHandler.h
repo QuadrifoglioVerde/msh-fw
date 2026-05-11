@@ -22,7 +22,7 @@
 class UdpMulticastHandler final
 {
   public:
-    UdpMulticastHandler() : isRunning(false) { udpIpAddress = IPAddress(224, 0, 0, 69); }
+    UdpMulticastHandler() : isRunning(false) { udpIpAddress = config.network.ipv4_config.subnet; }
 
     void start()
     {
