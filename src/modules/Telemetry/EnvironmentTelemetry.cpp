@@ -332,6 +332,10 @@ int32_t EnvironmentTelemetryModule::runOnce()
             sendTelemetry();
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY);
+        } else if (!Throttle::isWithinTimespanMs(lastSentToMqtt, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
+                                                                   default_telemetry_broadcast_interval_secs))) {
+            sendTelemetry(NODENUM_BROADCAST_NO_LORA); // Send to MQTT only
+            lastSentToMqtt = millis();
         } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
             // Just send to phone when it's not our time to send to mesh yet
