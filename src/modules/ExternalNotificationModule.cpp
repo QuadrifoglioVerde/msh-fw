@@ -136,7 +136,8 @@ int32_t ExternalNotificationModule::runOnce()
         if (moduleConfig.external_notification.use_i2s_as_buzzer) {
             if (audioThread->isPlaying()) {
                 // Continue playing
-            } else if (isNagging && (nagCycleCutoff >= millis())) {
+            } else if (isNagging && getExternal(2) && (nagCycleCutoff >= millis())) {
+                // OPRAVA: && getExternal(2) zajišťuje, že I2S bzučí jen tehdy, když má bzučák povolení
                 audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
             }
             // we need fast updates to play the RTTTL
@@ -147,7 +148,8 @@ int32_t ExternalNotificationModule::runOnce()
         if (moduleConfig.external_notification.use_pwm && config.device.buzzer_gpio && canBuzz()) {
             if (rtttl::isPlaying()) {
                 rtttl::play();
-            } else if (isNagging && (nagCycleCutoff >= millis())) {
+            } else if (isNagging && getExternal(2) && (nagCycleCutoff >= millis())) {
+                // OPRAVA: && getExternal(2) zajišťuje, že PWM bzučí jen tehdy, když má bzučák povolení
                 // start the song again if we have time left
                 rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
             }
@@ -286,26 +288,6 @@ ExternalNotificationModule::ExternalNotificationModule()
         without having to configure it from the PythonAPI or WebUI.
     */
 
-    // moduleConfig.external_notification.alert_message = true;
-    // moduleConfig.external_notification.alert_message_buzzer = true;
-    // moduleConfig.external_notification.alert_message_vibra = true;
-    // moduleConfig.external_notification.use_i2s_as_buzzer = true;
-
-    // moduleConfig.external_notification.active = true;
-    // moduleConfig.external_notification.alert_bell = 1;
-    // moduleConfig.external_notification.output_ms = 1000;
-    // moduleConfig.external_notification.output = 4; // RAK4631 IO4
-    // moduleConfig.external_notification.output_buzzer = 10; // RAK4631 IO6
-    // moduleConfig.external_notification.output_vibra = 28; // RAK4631 IO7
-    // moduleConfig.external_notification.nag_timeout = 300;
-
-    // T-Watch / T-Deck i2s audio as buzzer:
-    // moduleConfig.external_notification.enabled = true;
-    // moduleConfig.external_notification.nag_timeout = 300;
-    // moduleConfig.external_notification.output_ms = 1000;
-    // moduleConfig.external_notification.use_i2s_as_buzzer = true;
-    // moduleConfig.external_notification.alert_message_buzzer = true;
-
     if (moduleConfig.external_notification.enabled) {
 #if !defined(MESHTASTIC_EXCLUDE_INPUTBROKER)
         if (inputBroker) // put our callback in the inputObserver list
@@ -387,25 +369,24 @@ ProcessMessage ExternalNotificationModule::handleReceived(const meshtastic_MeshP
 
             const bool buzzerModeIsDirectOnly =
                 (config.device.buzzer_mode == meshtastic_Config_DeviceConfig_BuzzerMode_DIRECT_MSG_ONLY);
+                
+            // Zjistíme, zda máme bzučák ztlumit z důvodu DIRECT_MSG_ONLY
+            const bool shouldSuppressBuzzer = buzzerModeIsDirectOnly && !isDmToUs && !containsBell;
 
-            // Each output evaluates its own alert condition independently:
-            // alert_bell_* fires only when a bell character is present.
-            // alert_message_* fires on any non-muted message.
-
-            // Alert when receiving a bell = alertBell: true
-            // Alert when receiving a message = alertMessage: true
+            // Alert kdyz je zprava v pohode (generic LED)
             const bool genericShouldAlert = (moduleConfig.external_notification.alert_bell && containsBell) ||
                                             (moduleConfig.external_notification.alert_message && !is_muted);
 
-            // Alert GPIO Vibra when receiving a bell = alertBellVibra: true
-            // Alert GPIO Vibra when receiving a message = alertMessageVibra: true
+            // Alert GPIO Vibra
             const bool vibraShouldAlert = (moduleConfig.external_notification.alert_bell_vibra && containsBell) ||
                                           (moduleConfig.external_notification.alert_message_vibra && !is_muted);
 
-            // Alert GPIO Buzzer when receiving a bell = alertBellBuzzer: true
-            // Alert GPIO Buzzer when receiving a message = alertMessageBuzzer: true
-            const bool buzzerShouldAlert = canBuzz() && ((moduleConfig.external_notification.alert_bell_buzzer && containsBell) ||
-                                                         (moduleConfig.external_notification.alert_message_buzzer && !is_muted));
+            // Alert Buzzer - zde otestujeme, zda by vubec mel piskat
+            const bool buzzerAlertCondition = (moduleConfig.external_notification.alert_bell_buzzer && containsBell) ||
+                                              (moduleConfig.external_notification.alert_message_buzzer && !is_muted);
+                                              
+            // Pokud je zapnuty bzucak, neni potlacen a jsou splneny podminky upozorneni
+            const bool buzzerShouldAlert = canBuzz() && !shouldSuppressBuzzer && buzzerAlertCondition;
 
             if (genericShouldAlert || vibraShouldAlert || buzzerShouldAlert) {
                 nagCycleCutoff = millis() + (moduleConfig.external_notification.nag_timeout
@@ -425,34 +406,36 @@ ProcessMessage ExternalNotificationModule::handleReceived(const meshtastic_MeshP
                 setExternalState(1, true);
             }
 
+            if (canBuzz() && shouldSuppressBuzzer && buzzerAlertCondition) {
+                LOG_INFO("Message buzzer was suppressed because buzzer mode DIRECT_MSG_ONLY");
+            }
+
             if (buzzerShouldAlert) {
                 LOG_INFO("externalNotificationModule - Buzzer alert");
-                if (buzzerModeIsDirectOnly && !isDmToUs && !containsBell) {
-                    LOG_INFO("Message buzzer was suppressed because buzzer mode DIRECT_MSG_ONLY");
-                } else {
-                    // Buzz if buzzer mode is not in DIRECT_MSG_ONLY or is DM to us
+                
+                // OPRAVA: Pevně uložíme pro runOnce(), že se má bzučák opravdu spustit
+                setExternalState(2, true);
+
 #ifdef HAS_DRV2605
-                    drv.setWaveform(0, 16); // Long buzzer 100%
-                    drv.setWaveform(1, 0);  // Pause
-                    drv.setWaveform(2, 16);
-                    drv.setWaveform(3, 0);
-                    drv.setWaveform(4, 16);
-                    drv.setWaveform(5, 0);
-                    drv.setWaveform(6, 16);
-                    drv.setWaveform(7, 0);
-                    drv.go();
+                drv.setWaveform(0, 16); // Long buzzer 100%
+                drv.setWaveform(1, 0);  // Pause
+                drv.setWaveform(2, 16);
+                drv.setWaveform(3, 0);
+                drv.setWaveform(4, 16);
+                drv.setWaveform(5, 0);
+                drv.setWaveform(6, 16);
+                drv.setWaveform(7, 0);
+                drv.go();
 #endif
 
-                    if (moduleConfig.external_notification.use_i2s_as_buzzer) {
+                if (moduleConfig.external_notification.use_i2s_as_buzzer) {
 #ifdef HAS_I2S
-                        audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
+                    audioThread->beginRttl(rtttlConfig.ringtone, strlen_P(rtttlConfig.ringtone));
 #endif
-                    } else if (moduleConfig.external_notification.use_pwm) {
-                        rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
-                    } else {
-                        setExternalState(2, true);
-                    }
-                }
+                } else if (moduleConfig.external_notification.use_pwm) {
+                    rtttl::begin(config.device.buzzer_gpio, rtttlConfig.ringtone);
+                } 
+                // else větev odstraněna, protože setExternalState(2, true) voláme nyní univerzálně výše
             }
 
             setIntervalFromNow(0); // run once so we know if we should do something
