@@ -51,6 +51,7 @@
 #include "modules/HopScalingModule.h"
 #endif
 #include "modules/TextMessageModule.h"
+#include "modules/FavoriteModule.h"
 #if !MESHTASTIC_EXCLUDE_TRACEROUTE
 #include "modules/TraceRouteModule.h"
 #endif
@@ -164,6 +165,7 @@ void setupModules()
 #endif
 #if !MESHTASTIC_EXCLUDE_TEXTMESSAGE
     textMessageModule = new TextMessageModule();
+    favoriteModule = new FavoriteModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_TRACEROUTE
     traceRouteModule = new TraceRouteModule();
