@@ -38,7 +38,7 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
     if (config.device.role != meshtastic_Config_DeviceConfig_Role_ROUTER &&
         config.device.role != meshtastic_Config_DeviceConfig_Role_ROUTER_LATE)
     {
-        LOG_DEBUG("FavoriteModule: ignoring packet because role=%d is not router/router_late", config.device.role);
+        LOG_DEBUG("FavoriteModule: ignoring packet because role=%d is not router/_late", config.device.role);
         return ProcessMessage::CONTINUE;
     }
 
@@ -118,7 +118,7 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
 
 std::string FavoriteModule::buildFavoriteList() const
 {
-    std::string out = "FAVs: ";
+    std::string out = "";
     bool first = true;
     size_t favoriteCount = 0;
 
