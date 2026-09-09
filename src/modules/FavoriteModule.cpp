@@ -4,7 +4,9 @@
 #include "mesh/MeshService.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -17,6 +19,71 @@ FavoriteModule::FavoriteModule() : SinglePortModule("favorite", meshtastic_PortN
 namespace
 {
     constexpr size_t FAVORITE_REPLY_CHUNK_SIZE = 200;
+
+    bool senderIsAuthorizedAdmin(const meshtastic_MeshPacket &mp)
+    {
+        if (!mp.pki_encrypted || mp.public_key.size != 32)
+            return false;
+
+        for (int i = 0; i < 3; ++i)
+        {
+            if (config.security.admin_key[i].size == 32 &&
+                memcmp(mp.public_key.bytes, config.security.admin_key[i].bytes, 32) == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool parseFavoriteTarget(const std::string &value, NodeNum &target)
+    {
+        std::string normalized = value;
+
+        while (!normalized.empty() && std::isspace(static_cast<unsigned char>(normalized.front())))
+        {
+            normalized.erase(normalized.begin());
+        }
+
+        if (normalized.empty())
+            return false;
+
+        if (normalized.front() == '!')
+        {
+            normalized.erase(normalized.begin());
+        }
+
+        if (normalized.empty())
+            return false;
+
+        if (normalized.compare(0, 2, "0x") == 0 || normalized.compare(0, 2, "0X") == 0)
+        {
+            normalized.erase(0, 2);
+        }
+
+        if (normalized.empty())
+            return false;
+
+        for (char c : normalized)
+        {
+            if (!std::isxdigit(static_cast<unsigned char>(c)))
+            {
+                return false;
+            }
+        }
+
+        char *end = nullptr;
+        const unsigned long parsed = std::strtoul(normalized.c_str(), &end, 16);
+
+        if (end == nullptr || *end != '\0')
+        {
+            return false;
+        }
+
+        target = static_cast<NodeNum>(parsed);
+        return true;
+    }
 }
 
 bool FavoriteModule::wantPacket(const meshtastic_MeshPacket *p)
@@ -59,10 +126,102 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
         return ProcessMessage::CONTINUE;
     }
 
+    std::string rest(buf + 3);
+    while (!rest.empty() && std::isspace(static_cast<unsigned char>(rest.front())))
+    {
+        rest.erase(rest.begin());
+    }
+
+    if (!rest.empty())
+    {
+        bool addFavorite = true;
+        if (strncasecmp(rest.c_str(), "ADD", 3) == 0 &&
+            (rest.size() == 3 || std::isspace(static_cast<unsigned char>(rest[3]))))
+        {
+            rest.erase(0, 3);
+            while (!rest.empty() && std::isspace(static_cast<unsigned char>(rest.front())))
+            {
+                rest.erase(rest.begin());
+            }
+        }
+        else if (strncasecmp(rest.c_str(), "DEL", 3) == 0 &&
+                 (rest.size() == 3 || std::isspace(static_cast<unsigned char>(rest[3]))))
+        {
+            addFavorite = false;
+            rest.erase(0, 3);
+            while (!rest.empty() && std::isspace(static_cast<unsigned char>(rest.front())))
+            {
+                rest.erase(rest.begin());
+            }
+        }
+
+        NodeNum target = 0;
+        if (!parseFavoriteTarget(rest, target))
+        {
+            LOG_WARN("FavoriteModule: ignoring malformed favorite command from 0x%08x: '%s'", mp.from, rest.c_str());
+            return ProcessMessage::STOP;
+        }
+
+        if (!senderIsAuthorizedAdmin(mp))
+        {
+            LOG_WARN("FavoriteModule: rejecting favorite command from non-admin sender 0x%08x", mp.from);
+            return ProcessMessage::STOP;
+        }
+
+        if (addFavorite)
+        {
+            auto *node = nodeDB->getMeshNode(target);
+            if (node == nullptr)
+            {
+                node = nodeDB->getOrCreateMeshNode(target);
+            }
+
+            if (node == nullptr)
+            {
+                LOG_WARN("FavoriteModule: failed to resolve node 0x%08x for favorite command", target);
+                return ProcessMessage::STOP;
+            }
+
+            if (nodeDB->setProtectedFlag(node, NODEINFO_BITFIELD_IS_FAVORITE_MASK, true))
+            {
+                LOG_INFO("FavoriteModule: authorized admin 0x%08x added node 0x%08x to favorites", mp.from, target);
+            }
+            else
+            {
+                LOG_WARN("FavoriteModule: unable to add node 0x%08x to favorites (protected-node cap)", target);
+            }
+        }
+        else
+        {
+            auto *node = nodeDB->getMeshNode(target);
+            if (node == nullptr)
+            {
+                LOG_INFO("FavoriteModule: ignoring DEL for unknown node 0x%08x", target);
+                return ProcessMessage::STOP;
+            }
+
+            if (nodeDB->setProtectedFlag(node, NODEINFO_BITFIELD_IS_FAVORITE_MASK, false))
+            {
+                LOG_INFO("FavoriteModule: authorized admin 0x%08x removed node 0x%08x from favorites", mp.from, target);
+            }
+            else
+            {
+                LOG_INFO("FavoriteModule: authorized admin 0x%08x removed node 0x%08x from favorites (already unset)",
+                         mp.from, target);
+            }
+        }
+
+        return ProcessMessage::STOP;
+    }
+
     LOG_DEBUG("FavoriteModule: building favorite list response for source 0x%08x", mp.from);
 
     const std::string body = buildFavoriteList();
     const size_t totalChunks = (body.size() + FAVORITE_REPLY_CHUNK_SIZE - 1) / FAVORITE_REPLY_CHUNK_SIZE;
+
+    // The FAV list is a response stream, so suppress the generic NO_RESPONSE fallback that would otherwise
+    // fire after this module sends its own packets.
+    ignoreRequest = true;
 
     if (totalChunks <= 1)
     {
@@ -73,21 +232,18 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
             return ProcessMessage::STOP;
         }
 
-        reply->to = mp.from;
-        reply->from = nodeDB->getNodeNum();
-        reply->channel = mp.channel;
-        reply->want_ack = true;
+        setReplyTo(reply, mp);
 
         const size_t bodyLen = std::min<size_t>(body.size(), sizeof(reply->decoded.payload.bytes));
         reply->decoded.payload.size = bodyLen;
         memcpy(reply->decoded.payload.bytes, body.c_str(), bodyLen);
 
-        LOG_DEBUG("FavoriteModule: sending payload='%s' (%zu bytes)", body.c_str(), bodyLen);
+        LOG_DEBUG("FavoriteModule: sending payload='%s' (%u bytes)", body.c_str(), static_cast<unsigned int>(bodyLen));
         service->sendToMesh(reply);
-        return ProcessMessage::STOP;
+        return ProcessMessage::CONTINUE;
     }
 
-    LOG_DEBUG("FavoriteModule: splitting favorite list into %zu chunks", totalChunks);
+    LOG_DEBUG("FavoriteModule: splitting favorite list into %u chunks", static_cast<unsigned int>(totalChunks));
 
     for (size_t chunkIndex = 0; chunkIndex < totalChunks; ++chunkIndex)
     {
@@ -98,10 +254,7 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
             break;
         }
 
-        reply->to = mp.from;
-        reply->from = nodeDB->getNodeNum();
-        reply->channel = mp.channel;
-        reply->want_ack = true;
+        setReplyTo(reply, mp);
 
         const size_t offset = chunkIndex * FAVORITE_REPLY_CHUNK_SIZE;
         const size_t chunkLen = std::min<size_t>(FAVORITE_REPLY_CHUNK_SIZE, body.size() - offset);
@@ -109,11 +262,12 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
         reply->decoded.payload.size = chunkLen;
         memcpy(reply->decoded.payload.bytes, body.c_str() + offset, chunkLen);
 
-        LOG_DEBUG("FavoriteModule: sending chunk %zu/%zu (%zu bytes)", chunkIndex + 1, totalChunks, chunkLen);
+        LOG_DEBUG("FavoriteModule: sending chunk %u/%u (%u bytes)", static_cast<unsigned int>(chunkIndex + 1),
+                  static_cast<unsigned int>(totalChunks), static_cast<unsigned int>(chunkLen));
         service->sendToMesh(reply);
     }
 
-    return ProcessMessage::STOP;
+    return ProcessMessage::CONTINUE;
 }
 
 std::string FavoriteModule::buildFavoriteList() const
@@ -146,6 +300,6 @@ std::string FavoriteModule::buildFavoriteList() const
         return "No favorite nodes";
     }
 
-    LOG_DEBUG("FavoriteModule: favorite list contains %zu node(s)", favoriteCount);
+    LOG_DEBUG("FavoriteModule: favorite list contains %u node(s)", static_cast<unsigned int>(favoriteCount));
     return out;
 }
