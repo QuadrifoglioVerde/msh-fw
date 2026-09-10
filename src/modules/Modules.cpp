@@ -124,7 +124,8 @@
 void setupModules()
 {
 #if (HAS_BUTTON || ARCH_PORTDUINO) && !MESHTASTIC_EXCLUDE_INPUTBROKER
-    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR)
+    {
         inputBroker = new InputBroker();
         systemCommandsModule = new SystemCommandsModule();
         buzzerFeedbackThread = new BuzzerFeedbackThread();
@@ -136,7 +137,8 @@ void setupModules()
 #endif
 
 #if HAS_TRAFFIC_MANAGEMENT && !MESHTASTIC_EXCLUDE_TRAFFIC_MANAGEMENT
-    if (moduleConfig.has_traffic_management) {
+    if (moduleConfig.has_traffic_management)
+    {
         trafficManagementModule = new TrafficManagementModule();
     }
 #endif
@@ -164,25 +166,28 @@ void setupModules()
     geofenceModule = new GeofenceModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_TEXTMESSAGE
-    textMessageModule = new TextMessageModule();
     favoriteModule = new FavoriteModule();
+    textMessageModule = new TextMessageModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_TRACEROUTE
     traceRouteModule = new TraceRouteModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_NEIGHBORINFO
-    if (moduleConfig.has_neighbor_info && moduleConfig.neighbor_info.enabled) {
+    if (moduleConfig.has_neighbor_info && moduleConfig.neighbor_info.enabled)
+    {
         neighborInfoModule = new NeighborInfoModule();
     }
 #endif
 #if !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
-    if (moduleConfig.has_detection_sensor && moduleConfig.detection_sensor.enabled) {
+    if (moduleConfig.has_detection_sensor && moduleConfig.detection_sensor.enabled)
+    {
         detectionSensorModule = new DetectionSensorModule();
     }
 #endif
 #if !MESHTASTIC_EXCLUDE_ATAK
     if (config.device.role == meshtastic_Config_DeviceConfig_Role_TAK ||
-        config.device.role == meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) {
+        config.device.role == meshtastic_Config_DeviceConfig_Role_TAK_TRACKER)
+    {
         atakPluginModule = new AtakPluginModule();
     }
 #endif
@@ -210,12 +215,14 @@ void setupModules()
     // Example: Put your module here
     // new ReplyModule();
 #if HAS_SCREEN && !MESHTASTIC_EXCLUDE_CANNEDMESSAGES
-    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR)
+    {
         cannedMessageModule = new CannedMessageModule();
     }
 #endif
 #if HAS_SCREEN && BASEUI_HAS_GAMES
-    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR)
+    {
         gamesModule = new GamesModule();
     }
 #endif
@@ -227,33 +234,38 @@ void setupModules()
 #endif
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
     if (moduleConfig.has_telemetry &&
-        (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled)) {
+        (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled))
+    {
         environmentTelemetryModule = new EnvironmentTelemetryModule();
     }
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_AIR_QUALITY_SENSOR
     if (moduleConfig.has_telemetry &&
-        (moduleConfig.telemetry.air_quality_enabled || moduleConfig.telemetry.air_quality_screen_enabled)) {
+        (moduleConfig.telemetry.air_quality_enabled || moduleConfig.telemetry.air_quality_screen_enabled))
+    {
         new AirQualityTelemetryModule();
     }
 #endif
 #if !MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY
     if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
-        nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0) {
+        nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0)
+    {
         new HealthTelemetryModule();
     }
 #endif
 #endif
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
     if (moduleConfig.has_telemetry &&
-        (moduleConfig.telemetry.power_measurement_enabled || moduleConfig.telemetry.power_screen_enabled)) {
+        (moduleConfig.telemetry.power_measurement_enabled || moduleConfig.telemetry.power_screen_enabled))
+    {
         new PowerTelemetryModule();
     }
 #endif
-#if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040) || defined(ARCH_STM32WL)) &&                             \
+#if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040) || defined(ARCH_STM32WL)) && \
     !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 #if !MESHTASTIC_EXCLUDE_SERIAL
     if (moduleConfig.has_serial && moduleConfig.serial.enabled &&
-        config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+        config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR)
+    {
         new SerialModule();
     }
 #endif
@@ -264,14 +276,16 @@ void setupModules()
     audioModule = new AudioModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_PAXCOUNTER
-    if (moduleConfig.has_paxcounter && moduleConfig.paxcounter.enabled) {
+    if (moduleConfig.has_paxcounter && moduleConfig.paxcounter.enabled)
+    {
         paxcounterModule = new PaxcounterModule();
     }
 #endif
 #endif
 #if defined(ARCH_ESP32) || defined(ARCH_PORTDUINO)
 #if !MESHTASTIC_EXCLUDE_STOREFORWARD
-    if (moduleConfig.has_store_forward && moduleConfig.store_forward.enabled) {
+    if (moduleConfig.has_store_forward && moduleConfig.store_forward.enabled)
+    {
         storeForwardModule = new StoreForwardModule();
     }
 #endif

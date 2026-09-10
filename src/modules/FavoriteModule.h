@@ -4,15 +4,15 @@
 
 class FavoriteModule : public SinglePortModule
 {
-  public:
-    FavoriteModule();
+public:
+  FavoriteModule();
 
-  protected:
-    bool wantPacket(const meshtastic_MeshPacket *p) override;
-    ProcessMessage handleReceived(const meshtastic_MeshPacket &mp) override;
+protected:
+  bool wantPacket(const meshtastic_MeshPacket *p) override;
+  ProcessMessage handleReceived(const meshtastic_MeshPacket &mp) override;
 
-  private:
-    std::string buildFavoriteList() const;
+private:
+  std::string buildFavoriteList() const;
 };
 
 extern FavoriteModule *favoriteModule;

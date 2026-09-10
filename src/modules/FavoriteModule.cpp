@@ -219,10 +219,6 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
     const std::string body = buildFavoriteList();
     const size_t totalChunks = (body.size() + FAVORITE_REPLY_CHUNK_SIZE - 1) / FAVORITE_REPLY_CHUNK_SIZE;
 
-    // The FAV list is a response stream, so suppress the generic NO_RESPONSE fallback that would otherwise
-    // fire after this module sends its own packets.
-    ignoreRequest = true;
-
     if (totalChunks <= 1)
     {
         auto *reply = allocDataPacket();
@@ -232,7 +228,11 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
             return ProcessMessage::STOP;
         }
 
-        setReplyTo(reply, mp);
+        reply->to = getFrom(&mp);
+        reply->channel = mp.channel;
+        reply->want_ack = false;
+        reply->decoded.want_response = false;
+        reply->decoded.request_id = 0;
 
         const size_t bodyLen = std::min<size_t>(body.size(), sizeof(reply->decoded.payload.bytes));
         reply->decoded.payload.size = bodyLen;
@@ -240,7 +240,7 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
 
         LOG_DEBUG("FavoriteModule: sending payload='%s' (%u bytes)", body.c_str(), static_cast<unsigned int>(bodyLen));
         service->sendToMesh(reply);
-        return ProcessMessage::CONTINUE;
+        return ProcessMessage::STOP;
     }
 
     LOG_DEBUG("FavoriteModule: splitting favorite list into %u chunks", static_cast<unsigned int>(totalChunks));
@@ -254,7 +254,11 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
             break;
         }
 
-        setReplyTo(reply, mp);
+        reply->to = getFrom(&mp);
+        reply->channel = mp.channel;
+        reply->want_ack = false;
+        reply->decoded.want_response = false;
+        reply->decoded.request_id = 0;
 
         const size_t offset = chunkIndex * FAVORITE_REPLY_CHUNK_SIZE;
         const size_t chunkLen = std::min<size_t>(FAVORITE_REPLY_CHUNK_SIZE, body.size() - offset);
@@ -267,7 +271,7 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
         service->sendToMesh(reply);
     }
 
-    return ProcessMessage::CONTINUE;
+    return ProcessMessage::STOP;
 }
 
 std::string FavoriteModule::buildFavoriteList() const
