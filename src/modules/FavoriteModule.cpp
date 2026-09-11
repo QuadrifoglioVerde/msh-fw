@@ -103,9 +103,10 @@ ProcessMessage FavoriteModule::handleReceived(const meshtastic_MeshPacket &mp)
     }
 
     if (config.device.role != meshtastic_Config_DeviceConfig_Role_ROUTER &&
-        config.device.role != meshtastic_Config_DeviceConfig_Role_ROUTER_LATE)
+        config.device.role != meshtastic_Config_DeviceConfig_Role_ROUTER_LATE &&
+        config.device.role != meshtastic_Config_DeviceConfig_Role_CLIENT_BASE)
     {
-        LOG_DEBUG("FavoriteModule: ignoring packet because role=%d is not router/_late", config.device.role);
+        LOG_DEBUG("FavoriteModule: ignoring packet because role=%d is not R/RL/CB", config.device.role);
         return ProcessMessage::CONTINUE;
     }
 
