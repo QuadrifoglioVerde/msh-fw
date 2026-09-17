@@ -104,7 +104,7 @@ jobs:
         with:
           submodules: recursive
       - name: Check ${{ matrix.check.board }}
-        uses: meshtastic/gh-action-firmware@58010a6a1d27ee8124d96d0279a162f0469c2b55
+        uses: meshtastic/gh-action-firmware@main
         with:
           pio_platform: ${{ matrix.check.platform }}
           pio_env: ${{ matrix.check.board }}
