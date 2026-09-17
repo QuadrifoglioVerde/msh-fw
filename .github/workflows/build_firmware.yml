@@ -29,7 +29,7 @@ jobs:
 
       - name: Build ${{ inputs.platform }}
         id: build
-        uses: meshtastic/gh-action-firmware@main
+        uses: meshtastic/gh-action-firmware@58010a6a1d27ee8124d96d0279a162f0469c2b55
         with:
           pio_platform: ${{ inputs.platform }}
           pio_env: ${{ inputs.pio_env }}
