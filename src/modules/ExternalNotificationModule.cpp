@@ -14,7 +14,6 @@
  * @date [Insert Date]
  */
 #include "ExternalNotificationModule.h"
-#include "Channels.h"
 #include "MeshService.h"
 #include "NodeDB.h"
 #include "Router.h"
@@ -94,12 +93,13 @@ int32_t ExternalNotificationModule::runOnce()
 #if defined(HAS_I2S_SPEAKER_NRF52)
         isRtttlPlaying = isRtttlPlaying || nrf52RtttlPlayer.isPlaying();
 #endif
-        // isNagging is the armed flag; nagCycleCutoff is only a deadline while it is set, so
-        // short-circuit before the comparison. `millis() + durationMs` can land on any value.
+        // isNagging is the armed flag; nagCycleCutoff holds a real deadline only while it is set
+        // (UINT32_MAX once stopped, 1 at boot), so short-circuit before the comparison.
         const bool nagWindowExpired = !isNagging || Throttle::deadlinePassed(nagCycleCutoff);
         if (nagWindowExpired && !isRtttlPlaying)
         {
             // Turn off external notification immediately when timeout is reached, regardless of song state
+            nagCycleCutoff = UINT32_MAX;
             ExternalNotificationModule::stopNow();
             isNagging = false;
             return INT32_MAX; // save cycles till we're needed again
@@ -351,9 +351,9 @@ void ExternalNotificationModule::stopNow()
 #endif
 
     // Prevent the state machine from immediately re-triggering outputs after a manual stop.
-    // Clearing isNagging disarms the cycle; nagCycleCutoff is never read without it.
     isNagging = false;
     buzzerShouldAlert = false;
+    nagCycleCutoff = UINT32_MAX;
 
 #ifdef HAS_I2S
     // GPIO0 is used as mclk for I2S audio and set to OUTPUT by the sound library
@@ -453,8 +453,15 @@ ProcessMessage ExternalNotificationModule::handleReceived(const meshtastic_MeshP
                 }
             }
 
+            const meshtastic_NodeInfoLite *sender = nodeDB->getMeshNode(mp.from);
+            meshtastic_Channel ch = channels.getByIndex(mp.channel ? mp.channel : channels.getPrimaryIndex());
+
+            // If we receive a broadcast message, apply channel mute setting
+            // If we receive a direct message and the receipent is us, apply DM mute setting
+            // Else we just handle it as not muted.
             const bool isDmToUs = !isBroadcast(mp.to) && isToUs(&mp);
-            const bool is_muted = isMutedForPacket(mp);
+            bool is_muted = isDmToUs ? nodeInfoLiteIsMuted(sender)
+                                     : (ch.settings.has_module_settings && ch.settings.module_settings.is_muted);
 
             const bool buzzerModeIsDirectOnly =
                 (config.device.buzzer_mode == meshtastic_Config_DeviceConfig_BuzzerMode_DIRECT_MSG_ONLY);
@@ -672,14 +679,8 @@ void ExternalNotificationModule::handleSetRingtone(const char *from_msg)
 #if !MESHTASTIC_EXCLUDE_INPUTBROKER
 int ExternalNotificationModule::handleInputEvent(const InputEvent *event)
 {
-<<<<<<< HEAD
-    // Testing the deadline instead of isNagging was true at boot, and the non-zero return
-    // swallowed the first input event from every later observer.
-    if (isNagging) {
-=======
     if (nagCycleCutoff != UINT32_MAX)
     {
->>>>>>> origin/qv-upravy-v2.8.0b
         stopNow();
         return 1;
     }
