@@ -14,39 +14,40 @@
 #include "WVariant.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif // __cplusplus
 
-/*
-Xiao pin assignments
+    /*
+    Xiao pin assignments
 
-| Pin   | Default  | I2C  | BTB  | BLE-L |     | Pin   | Default | I2C  | BTB  | BLE-L |
-| ----- | -------- | ---- | ---- | ----- | --- | ----- | ------- | ---- | ---- | ----- |
-|       |          |      |      |       |     |       |         |      |      |       |
-| D0    | G_STBY   | UBTN | DIO1 | CS    |     | 5v    |         |      |      |       |
-| D1    | DIO1     | DIO1 | Busy | DIO1  |     | GND   |         |      |      |       |
-| D2    | NRST     | NRST | NRST | Busy  |     | 3v3   |         |      |      |       |
-| D3    | Busy     | Busy | CS   | NRST  |     | D10   | MOSI    | MOSI | MOSI | MOSI  |
-| D4    | CS       | CS   | RXEN | SDA   |     | D9    | MISO    | MISO | MISO | MISO  |
-| D5    | RXEN     | RXEN |      | SCL   |     | D8    | SCK     | SCK  | SCK  | SCK   |
-| D6    | G_TX     | SDA  | G_TX |       |     | D7    | G_RX    | SCL  | G_RX | RXEN  |
-|       |          |      |      |       |     |       |         |      |      |       |
-|       | End      |      |      |       |     |       |         |      |      |       |
-| NFC1/ | SDA      | G_TX | SDA  | G_TX  |     | NFC2/ | SCL     | G_RX | SCL  | G_RX  |
-| D30   |          |      |      |       |     | D31   |         |      |      |       |
-|       |          |      |      |       |     |       |         |      |      |       |
-|       | Internal |      |      |       |     |       |         |      |      |       |
-| D16   | SCL1     | SCL1 | SCL1 | SCL1  |     |       |         |      |      |       |
-| D17   | SDA1     | SDA1 | SDA1 | SDA1  |     |       |         |      |      |       |
+    | Pin   | Default  | I2C  | BTB  | BLE-L |     | Pin   | Default | I2C  | BTB  | BLE-L |
+    | ----- | -------- | ---- | ---- | ----- | --- | ----- | ------- | ---- | ---- | ----- |
+    |       |          |      |      |       |     |       |         |      |      |       |
+    | D0    | G_STBY   | UBTN | DIO1 | CS    |     | 5v    |         |      |      |       |
+    | D1    | DIO1     | DIO1 | Busy | DIO1  |     | GND   |         |      |      |       |
+    | D2    | NRST     | NRST | NRST | Busy  |     | 3v3   |         |      |      |       |
+    | D3    | Busy     | Busy | CS   | NRST  |     | D10   | MOSI    | MOSI | MOSI | MOSI  |
+    | D4    | CS       | CS   | RXEN | SDA   |     | D9    | MISO    | MISO | MISO | MISO  |
+    | D5    | RXEN     | RXEN |      | SCL   |     | D8    | SCK     | SCK  | SCK  | SCK   |
+    | D6    | G_TX     | SDA  | G_TX |       |     | D7    | G_RX    | SCL  | G_RX | RXEN  |
+    |       |          |      |      |       |     |       |         |      |      |       |
+    |       | End      |      |      |       |     |       |         |      |      |       |
+    | NFC1/ | SDA      | G_TX | SDA  | G_TX  |     | NFC2/ | SCL     | G_RX | SCL  | G_RX  |
+    | D30   |          |      |      |       |     | D31   |         |      |      |       |
+    |       |          |      |      |       |     |       |         |      |      |       |
+    |       | Internal |      |      |       |     |       |         |      |      |       |
+    | D16   | SCL1     | SCL1 | SCL1 | SCL1  |     |       |         |      |      |       |
+    | D17   | SDA1     | SDA1 | SDA1 | SDA1  |     |       |         |      |      |       |
 
-The default column shows the pin assignments for the Wio-SX1262 for XIAO
-(standalone SKU 113010003 or nRF52840 kit SKU 102010710).
-The I2C column shows an alternative pin assignment using I2C on D6/D7 in place of the GNSS.
-The BTB column shows the pin assignment for the Wio-SX1262 -30-pin board-to-board connector version from the ESP32S3 kit.
-The BLE-L column shows the pin assignment for the original DIY xiao_ble, and which is retained for legacy users.
-Note that the in addition to the difference between the default and the I2C pinouts in placing the pins on NFC or
-D6/D7, the user button is activated on D0. The button conflicts with the official GNSS module, so caution is advised.
-*/
+    The default column shows the pin assignments for the Wio-SX1262 for XIAO
+    (standalone SKU 113010003 or nRF52840 kit SKU 102010710).
+    The I2C column shows an alternative pin assignment using I2C on D6/D7 in place of the GNSS.
+    The BTB column shows the pin assignment for the Wio-SX1262 -30-pin board-to-board connector version from the ESP32S3 kit.
+    The BLE-L column shows the pin assignment for the original DIY xiao_ble, and which is retained for legacy users.
+    Note that the in addition to the difference between the default and the I2C pinouts in placing the pins on NFC or
+    D6/D7, the user button is activated on D0. The button conflicts with the official GNSS module, so caution is advised.
+    */
 
 #define PINS_COUNT (33)
 #define NUM_DIGITAL_PINS (33)
@@ -80,12 +81,12 @@ D6/D7, the user button is activated on D0. The button conflicts with the officia
 #define PIN_VBAT (32)
 #define VBAT_ENABLE (14)
 
-static const uint8_t A0 = PIN_A0;
-static const uint8_t A1 = PIN_A1;
-static const uint8_t A2 = PIN_A2;
-static const uint8_t A3 = PIN_A3;
-static const uint8_t A4 = PIN_A4;
-static const uint8_t A5 = PIN_A5;
+    static const uint8_t A0 = PIN_A0;
+    static const uint8_t A1 = PIN_A1;
+    static const uint8_t A2 = PIN_A2;
+    static const uint8_t A3 = PIN_A3;
+    static const uint8_t A4 = PIN_A4;
+    static const uint8_t A5 = PIN_A5;
 #define ADC_RESOLUTION 12
 
 /*
@@ -165,10 +166,10 @@ static const uint8_t A5 = PIN_A5;
 #define PIN_SPI_MOSI D10
 #define PIN_SPI_SCK D8
 
-static const uint8_t SS = SX126X_CS;
-static const uint8_t MOSI = PIN_SPI_MOSI;
-static const uint8_t MISO = PIN_SPI_MISO;
-static const uint8_t SCK = PIN_SPI_SCK;
+    static const uint8_t SS = SX126X_CS;
+    static const uint8_t MOSI = PIN_SPI_MOSI;
+    static const uint8_t MISO = PIN_SPI_MISO;
+    static const uint8_t SCK = PIN_SPI_SCK;
 
 /*
  * GPS
@@ -190,7 +191,7 @@ static const uint8_t SCK = PIN_SPI_SCK;
 #endif
 
 #define HAS_GPS 1
-#define GPS_BAUDRATE 9600
+#define GPS_BAUDRATE 38400
 #define GPS_THREAD_INTERVAL 50
 #define PIN_SERIAL1_TX GPS_TX_PIN
 #define PIN_SERIAL1_RX GPS_RX_PIN
@@ -231,13 +232,13 @@ static const uint8_t SCK = PIN_SPI_SCK;
 #endif // defined(SEEED_XIAO_NRF_KIT_DEFAULT) || defined(SEEED_XIAO_NRF_WIO_BTB)
 #endif // defined(XIAO_BLE_LEGACY_PINOUT)
 
-// // Internal LSM6DS3TR on XIAO nRF52840 Series - put it on wire1
-// // Note: disabled for now, as there are some issues with the LSM.
-// #define PIN_WIRE1_SDA (17)
-// #define PIN_WIRE1_SCL (16)
+    // // Internal LSM6DS3TR on XIAO nRF52840 Series - put it on wire1
+    // // Note: disabled for now, as there are some issues with the LSM.
+    // #define PIN_WIRE1_SDA (17)
+    // #define PIN_WIRE1_SCL (16)
 
-static const uint8_t SDA = PIN_WIRE_SDA; // Not sure if this is needed
-static const uint8_t SCL = PIN_WIRE_SCL; // Not sure if this is needed
+    static const uint8_t SDA = PIN_WIRE_SDA; // Not sure if this is needed
+    static const uint8_t SCL = PIN_WIRE_SCL; // Not sure if this is needed
 
 // // QSPI Pins
 // // ---------
