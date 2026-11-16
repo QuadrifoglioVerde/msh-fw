@@ -32,8 +32,8 @@
 
 namespace graphics
 {
-extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const char *titleStr, bool force_no_invert,
-                             bool show_date);
+    extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const char *titleStr, bool force_no_invert,
+                                 bool show_date);
 }
 #if __has_include(<Adafruit_AHTX0.h>)
 #include "Sensor/AHT10.h"
@@ -159,7 +159,7 @@ EnvironmentTelemetryModule *environmentTelemetryModule = nullptr;
 
 namespace
 {
-EnvironmentTelemetryModule::DisplaySource gDisplaySource = EnvironmentTelemetryModule::DisplaySource::Mesh;
+    EnvironmentTelemetryModule::DisplaySource gDisplaySource = EnvironmentTelemetryModule::DisplaySource::Mesh;
 } // namespace
 
 static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
@@ -174,7 +174,8 @@ EnvironmentTelemetryModule::DisplaySource EnvironmentTelemetryModule::getDisplay
 void EnvironmentTelemetryModule::setDisplaySource(DisplaySource source)
 {
     gDisplaySource = source;
-    if (environmentTelemetryModule != nullptr) {
+    if (environmentTelemetryModule != nullptr)
+    {
         environmentTelemetryModule->lastLocalDisplayRefreshMs = 0;
         environmentTelemetryModule->refreshDisplayedMeasurement();
     }
@@ -182,7 +183,8 @@ void EnvironmentTelemetryModule::setDisplaySource(DisplaySource source)
 
 void EnvironmentTelemetryModule::clearMeasurementPacket()
 {
-    if (lastMeasurementPacket != nullptr) {
+    if (lastMeasurementPacket != nullptr)
+    {
         packetPool.release(lastMeasurementPacket);
         lastMeasurementPacket = nullptr;
     }
@@ -190,11 +192,13 @@ void EnvironmentTelemetryModule::clearMeasurementPacket()
 
 bool EnvironmentTelemetryModule::shouldDisplayRemoteNode(NodeNum nodeNum) const
 {
-    if (nodeNum == 0 || nodeNum == nodeDB->getNodeNum()) {
+    if (nodeNum == 0 || nodeNum == nodeDB->getNodeNum())
+    {
         return false;
     }
 
-    switch (getDisplaySource()) {
+    switch (getDisplaySource())
+    {
     case DisplaySource::LocalSensor:
         return false;
     case DisplaySource::Mesh:
@@ -208,7 +212,8 @@ bool EnvironmentTelemetryModule::shouldDisplayRemoteNode(NodeNum nodeNum) const
 
 bool EnvironmentTelemetryModule::shouldKeepCurrentRemoteDisplay() const
 {
-    if (lastMeasurementPacket == nullptr) {
+    if (lastMeasurementPacket == nullptr)
+    {
         return false;
     }
 
@@ -217,7 +222,8 @@ bool EnvironmentTelemetryModule::shouldKeepCurrentRemoteDisplay() const
 
 bool EnvironmentTelemetryModule::shouldDisplayLocalMeasurement() const
 {
-    switch (getDisplaySource()) {
+    switch (getDisplaySource())
+    {
     case DisplaySource::LocalSensor:
         return true;
     case DisplaySource::Mesh:
@@ -232,12 +238,14 @@ bool EnvironmentTelemetryModule::shouldDisplayLocalMeasurement() const
 bool EnvironmentTelemetryModule::refreshLocalMeasurementPacket()
 {
     meshtastic_Telemetry local = meshtastic_Telemetry_init_zero;
-    if (!getEnvironmentTelemetry(&local)) {
+    if (!getEnvironmentTelemetry(&local))
+    {
         return false;
     }
 
     meshtastic_MeshPacket *localPacket = allocDataProtobuf(local);
-    if (localPacket == nullptr) {
+    if (localPacket == nullptr)
+    {
         return false;
     }
 
@@ -249,26 +257,31 @@ bool EnvironmentTelemetryModule::refreshLocalMeasurementPacket()
 
 void EnvironmentTelemetryModule::refreshDisplayedMeasurement()
 {
-    if (shouldDisplayLocalMeasurement()) {
+    if (shouldDisplayLocalMeasurement())
+    {
         if (lastMeasurementPacket != nullptr &&
-            Throttle::isWithinTimespanMs(lastLocalDisplayRefreshMs, LOCAL_DISPLAY_REFRESH_INTERVAL_MS)) {
+            Throttle::isWithinTimespanMs(lastLocalDisplayRefreshMs, LOCAL_DISPLAY_REFRESH_INTERVAL_MS))
+        {
             return;
         }
         lastLocalDisplayRefreshMs = millis();
-        if (!refreshLocalMeasurementPacket()) {
+        if (!refreshLocalMeasurementPacket())
+        {
             clearMeasurementPacket();
         }
         return;
     }
 
-    if (!shouldKeepCurrentRemoteDisplay()) {
+    if (!shouldKeepCurrentRemoteDisplay())
+    {
         clearMeasurementPacket();
     }
 }
 
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
-    if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+    if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE)
+    {
         return;
     }
     LOG_INFO("Environment Telemetry adding I2C devices");
@@ -381,7 +394,8 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 
 int32_t EnvironmentTelemetryModule::runOnce()
 {
-    if (sleepOnNextExecution == true) {
+    if (sleepOnNextExecution == true)
+    {
         if (shouldDeferDeepSleep())
             return PREFLIGHT_SLEEP_RETRY_MS;
         sleepOnNextExecution = false;
@@ -394,20 +408,24 @@ int32_t EnvironmentTelemetryModule::runOnce()
     uint32_t result = UINT32_MAX;
 
     if (!(moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled ||
-          ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE)) {
+          ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE))
+    {
         // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
         return disable();
     }
 
-    if (firstTime) {
+    if (firstTime)
+    {
         // This is the first time the OSThread library has called this function, so do some setup
         firstTime = 0;
 
-        if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+        if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE)
+        {
             LOG_INFO("Environment Telemetry: init");
 
             // check if we have at least one sensor
-            if (!sensors.empty()) {
+            if (!sensors.empty())
+            {
                 result = DEFAULT_SENSOR_MINIMUM_WAIT_TIME_BETWEEN_READS;
             }
 
@@ -438,15 +456,20 @@ int32_t EnvironmentTelemetryModule::runOnce()
         // it's possible to have this module enabled, only for displaying values on the screen.
         // therefore, we should only enable the sensor loop if measurement is also enabled
         return result == UINT32_MAX ? disable() : setStartDelay();
-    } else {
+    }
+    else
+    {
         // if we somehow got to a second run of this module with measurement disabled, then just wait forever
-        if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+        if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE)
+        {
             return disable();
         }
 
-        for (TelemetrySensor *sensor : sensors) {
+        for (TelemetrySensor *sensor : sensors)
+        {
             uint32_t delay = sensor->runOnce();
-            if (delay < result) {
+            if (delay < result)
+            {
                 result = delay;
             }
         }
@@ -454,7 +477,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
         // Give up on a stale immediate-send request rather than fire an arbitrarily late broadcast.
         if (immediateSendRequested &&
-            !Throttle::isWithinTimespanMs(immediateSendRequestedAtMs, IMMEDIATE_SEND_MAX_STALENESS_MS)) {
+            !Throttle::isWithinTimespanMs(immediateSendRequestedAtMs, IMMEDIATE_SEND_MAX_STALENESS_MS))
+        {
             immediateSendRequested = false;
         }
 
@@ -466,25 +490,33 @@ int32_t EnvironmentTelemetryModule::runOnce()
                                                                         default_telemetry_broadcast_interval_secs, numOnlineNodes,
                                                                         TrafficType::TELEMETRY))) &&
             airTime->isTxAllowedChannelUtil(config.device.role != meshtastic_Config_DeviceConfig_Role_SENSOR) &&
-            airTime->isTxAllowedAirUtil()) {
+            airTime->isTxAllowedAirUtil())
+        {
+            LOG_INFO("QV: Send Tele to ALL");
             sendTelemetry();
             immediateSendRequested = false;
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY);
-            lastSentToMqtt = millis();
-        } else if (!Throttle::isWithinTimespanMs(lastSentToMqtt, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
-                                                                   default_telemetry_broadcast_interval_secs))) {
+            lastSentToMqtt = Time::skipZero(Time::getMillis());
+        }
+        else if (!Throttle::isWithinTimespanMs(lastSentToMqtt, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
+                                                                                                 default_telemetry_broadcast_interval_secs)))
+        {
+            LOG_INFO("QV: Send Tele to MQTT only");
             sendTelemetry(NODENUM_BROADCAST_NO_LORA); // Send to MQTT only
-            lastSentToMqtt = millis();
-        } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
-                   (service->isToPhoneQueueEmpty())) {
+            lastSentToMqtt = Time::skipZero(Time::getMillis());
+        }
+        else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
+                 (service->isToPhoneQueueEmpty()))
+        {
             // Just send to phone when it's not our time to send to mesh yet
             // Only send while queue is empty (phone assumed connected)
             sendTelemetry(NODENUM_BROADCAST, true);
             lastSentToPhone = Time::skipZero(Time::getMillis());
         }
     }
-    if (sleepOnNextExecution) {
+    if (sleepOnNextExecution)
+    {
         // Honor the pre-sleep grace period armed in sendTelemetry(): OSThread reschedules with
         // this return value, which would otherwise override setIntervalFromNow() with the sensor
         // polling interval (sub-second while a BME680 reading is in flight) and trigger deep sleep
@@ -519,7 +551,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     int currentY = graphics::getTextPositions(display)[line++];
 
     // === Show "No Telemetry" if no data available ===
-    if (!lastMeasurementPacket) {
+    if (!lastMeasurementPacket)
+    {
         display->drawString(x, currentY, "No Telemetry");
         return;
     }
@@ -527,7 +560,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     // Decode the telemetry message from the latest received packet
     const meshtastic_Data &p = lastMeasurementPacket->decoded;
     meshtastic_Telemetry telemetry;
-    if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &telemetry)) {
+    if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &telemetry))
+    {
         display->drawString(x, currentY, "No Telemetry");
         return;
     }
@@ -554,7 +588,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     bool hasAny = m.has_temperature || m.has_relative_humidity || m.barometric_pressure != 0 || m.has_iaq || m.voltage != 0 ||
                   m.current != 0 || m.lux != 0 || m.white_lux != 0 || m.weight != 0 || m.distance != 0 || m.radiation != 0;
 
-    if (!hasAny) {
+    if (!hasAny)
+    {
         display->drawString(x, currentY, "No Telemetry");
         return;
     }
@@ -563,7 +598,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     const bool isLocalTelemetry = (getFrom(lastMeasurementPacket) == nodeDB->getNodeNum());
     const char *sender = isLocalTelemetry ? "Local Sensor" : getSenderShortName(*lastMeasurementPacket);
     String leftStr = String(sender);
-    if (!isLocalTelemetry) {
+    if (!isLocalTelemetry)
+    {
         uint32_t agoSecs = service->GetTimeSinceMeshPacket(lastMeasurementPacket);
         String agoStr = (agoSecs > 864000) ? "?"
                         : (agoSecs > 3600) ? String(agoSecs / 3600) + "h"
@@ -576,7 +612,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     // === Collect sensor readings as label strings (no icons) ===
     std::vector<String> entries;
 
-    if (m.has_temperature) {
+    if (m.has_temperature)
+    {
         String tempStr = moduleConfig.telemetry.environment_display_fahrenheit
                              ? "Tmp: " + String(UnitConversions::CelsiusToFahrenheit(m.temperature), 1) + "°F"
                              : "Tmp: " + String(m.temperature, 1) + "°C";
@@ -586,7 +623,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
         entries.push_back("Hum: " + String(m.relative_humidity, 0) + "%");
     if (m.barometric_pressure != 0)
         entries.push_back("Prss: " + String(m.barometric_pressure, 0) + " hPa");
-    if (m.has_iaq) {
+    if (m.has_iaq)
+    {
         String aqi = "IAQ: " + String(m.iaq);
         const char *bannerMsg = nullptr; // Default: no banner
 
@@ -598,13 +636,18 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
             aqi += " (Moderate)";
         else if (m.iaq <= 150)
             aqi += " (Poor)";
-        else if (m.iaq <= 200) {
+        else if (m.iaq <= 200)
+        {
             aqi += " (Unhealthy)";
             bannerMsg = "Unhealthy IAQ";
-        } else if (m.iaq <= 300) {
+        }
+        else if (m.iaq <= 300)
+        {
             aqi += " (Very Unhealthy)";
             bannerMsg = "Very Unhealthy IAQ";
-        } else {
+        }
+        else
+        {
             aqi += " (Hazardous)";
             bannerMsg = "Hazardous IAQ";
         }
@@ -618,12 +661,14 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
         bool isOwnTelemetry = isLocalTelemetry;
         bool isCooldownOver = (now - lastAlertTime > 60000);
 
-        if (isOwnTelemetry && bannerMsg && isCooldownOver) {
+        if (isOwnTelemetry && bannerMsg && isCooldownOver)
+        {
             LOG_INFO("drawFrame: IAQ %d (own) - showing banner: %s", m.iaq, bannerMsg);
             screen->showSimpleBanner(bannerMsg, 3000);
 
             // Only buzz if IAQ is over 200
-            if (m.iaq > 200 && moduleConfig.external_notification.enabled && !externalNotificationModule->getMute()) {
+            if (m.iaq > 200 && moduleConfig.external_notification.enabled && !externalNotificationModule->getMute())
+            {
                 playLongBeep();
             }
 
@@ -644,7 +689,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
         entries.push_back("Rad: " + String(m.radiation, 2) + " µR/h");
 
     // === Show first available metric on top-right of first line ===
-    if (!entries.empty()) {
+    if (!entries.empty())
+    {
         String valueStr = entries.front();
         int rightX = SCREEN_WIDTH - display->getStringWidth(valueStr);
         display->drawString(rightX, currentY, valueStr);
@@ -655,12 +701,14 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     currentY += rowHeight;
 
     // === Draw remaining entries in 2-column format (left and right) ===
-    for (size_t i = 0; i < entries.size(); i += 2) {
+    for (size_t i = 0; i < entries.size(); i += 2)
+    {
         // Left column
         display->drawString(x, currentY, entries[i]);
 
         // Right column if it exists
-        if (i + 1 < entries.size()) {
+        if (i + 1 < entries.size())
+        {
             int rightX = SCREEN_WIDTH / 2;
             display->drawString(rightX, currentY, entries[i + 1]);
         }
@@ -673,7 +721,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 
 bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Telemetry *t)
 {
-    if (t->which_variant == meshtastic_Telemetry_environment_metrics_tag) {
+    if (t->which_variant == meshtastic_Telemetry_environment_metrics_tag)
+    {
 #if defined(DEBUG_PORT) && !defined(DEBUG_MUTE)
         const char *sender = getSenderShortName(mp);
 
@@ -699,10 +748,13 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
         nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
 
         const NodeNum senderNode = getFrom(&mp);
-        if (shouldDisplayRemoteNode(senderNode)) {
+        if (shouldDisplayRemoteNode(senderNode))
+        {
             clearMeasurementPacket();
             lastMeasurementPacket = packetPool.allocCopy(mp);
-        } else if (!shouldKeepCurrentRemoteDisplay()) {
+        }
+        else if (!shouldKeepCurrentRemoteDisplay())
+        {
             refreshDisplayedMeasurement();
         }
     }
@@ -721,36 +773,42 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     m->which_variant = meshtastic_Telemetry_environment_metrics_tag;
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
-    for (TelemetrySensor *sensor : sensors) {
+    for (TelemetrySensor *sensor : sensors)
+    {
         get_metrics = sensor->getMetrics(m); // avoid short-circuit evaluation rules
         valid = valid || get_metrics;
         hasSensor = true;
     }
 
 #ifndef T1000X_SENSOR_EN
-    if (ina219Sensor.hasSensor()) {
+    if (ina219Sensor.hasSensor())
+    {
         get_metrics = ina219Sensor.getMetrics(m);
         valid = valid || get_metrics;
         hasSensor = true;
     }
-    if (ina260Sensor.hasSensor()) {
+    if (ina260Sensor.hasSensor())
+    {
         get_metrics = ina260Sensor.getMetrics(m);
         valid = valid || get_metrics;
         hasSensor = true;
     }
-    if (ina3221Sensor.hasSensor()) {
+    if (ina3221Sensor.hasSensor())
+    {
         get_metrics = ina3221Sensor.getMetrics(m);
         valid = valid || get_metrics;
         hasSensor = true;
     }
-    if (max17048Sensor.hasSensor()) {
+    if (max17048Sensor.hasSensor())
+    {
         get_metrics = max17048Sensor.getMetrics(m);
         valid = valid || get_metrics;
         hasSensor = true;
     }
 #endif
 #ifdef HAS_RAKPROT
-    if (rak9154Sensor.hasSensor()) {
+    if (rak9154Sensor.hasSensor())
+    {
         get_metrics = rak9154Sensor.getMetrics(m);
         valid = valid || get_metrics;
         hasSensor = true;
@@ -758,7 +816,8 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 #endif
 #ifdef HAS_RAKHUB
     // IPSO cache -> EnvironmentMetrics; chemistry off unless RAK_SENSORHUB_EXTENDED_ENV_METRICS.
-    if (rakSensorHub.hasSensor()) {
+    if (rakSensorHub.hasSensor())
+    {
         get_metrics = rakSensorHub.getMetrics(m);
         valid = valid || get_metrics;
         hasSensor = true;
@@ -769,8 +828,10 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 
 meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()
 {
-    if (currentRequest) {
-        if (isMultiHopBroadcastRequest() && !isSensorOrRouterRole()) {
+    if (currentRequest)
+    {
+        if (isMultiHopBroadcastRequest() && !isSensorOrRouterRole())
+        {
             ignoreRequest = true;
             return NULL;
         }
@@ -779,19 +840,26 @@ meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()
         meshtastic_Telemetry scratch;
         meshtastic_Telemetry *decoded = NULL;
         memset(&scratch, 0, sizeof(scratch));
-        if (pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &scratch)) {
+        if (pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &scratch))
+        {
             decoded = &scratch;
-        } else {
+        }
+        else
+        {
             LOG_ERROR("Error decoding EnvironmentTelemetry module");
             return NULL;
         }
         // Check for a request for environment metrics
-        if (decoded->which_variant == meshtastic_Telemetry_environment_metrics_tag) {
+        if (decoded->which_variant == meshtastic_Telemetry_environment_metrics_tag)
+        {
             meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
-            if (getEnvironmentTelemetry(&m)) {
+            if (getEnvironmentTelemetry(&m))
+            {
                 LOG_INFO("Environment telemetry reply to request");
                 return allocDataProtobuf(m);
-            } else {
+            }
+            else
+            {
                 return NULL;
             }
         }
@@ -807,7 +875,8 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 
     bool validTelemetry = getEnvironmentTelemetry(&m);
 
-    if (validTelemetry) {
+    if (validTelemetry)
+    {
         if (m.variant.environment_metrics.has_temperature || m.variant.environment_metrics.has_relative_humidity ||
             m.variant.environment_metrics.has_barometric_pressure)
             LOG_INFO("Send: barometric_pressure=%fkPa, relative_humidity=%f%RH, temperature=%fdegC",
@@ -854,25 +923,33 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
                      m.variant.environment_metrics.lightning_distance_km);
 
         meshtastic_MeshPacket *p = allocDataProtobuf(m);
-        if (!p) {
+        if (!p)
+        {
             validTelemetry = false;
-        } else {
+        }
+        else
+        {
             p->to = dest;
             p->decoded.want_response = false;
             if (config.device.role == meshtastic_Config_DeviceConfig_Role_SENSOR)
                 p->priority = meshtastic_MeshPacket_Priority_RELIABLE;
             else
                 p->priority = meshtastic_MeshPacket_Priority_BACKGROUND;
-            if (phoneOnly) {
+            if (phoneOnly)
+            {
                 LOG_INFO("Send packet to phone");
                 service->sendToPhone(p);
-            } else {
+            }
+            else
+            {
                 LOG_INFO("Send packet to mesh");
                 service->sendToMesh(p, RX_SRC_LOCAL, true);
 
-                if (isPowerSavingSensor()) {
+                if (isPowerSavingSensor())
+                {
                     meshtastic_ClientNotification *notification = clientNotificationPool.allocZeroed();
-                    if (notification) {
+                    if (notification)
+                    {
                         notification->level = meshtastic_LogRecord_Level_INFO;
                         notification->time = getValidTime(RTCQualityFromNet);
                         sprintf(notification->message, "Sending telemetry and sleeping for %us interval in a moment",
@@ -889,7 +966,8 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     // Arm the pre-sleep sequence even when no valid reading was available this cycle (e.g. a
     // failed sensor read): a power-saving SENSOR node must still return to deep sleep,
     // otherwise it stays awake until the next telemetry interval and drains its battery
-    if (!phoneOnly && isPowerSavingSensor()) {
+    if (!phoneOnly && isPowerSavingSensor())
+    {
         if (!validTelemetry)
             LOG_WARN("Env telemetry unavailable, sleep without send");
         sleepOnNextExecution = true;
@@ -907,28 +985,33 @@ AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule
     AdminMessageHandleResult result = AdminMessageHandleResult::NOT_HANDLED;
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
 
-    for (TelemetrySensor *sensor : sensors) {
+    for (TelemetrySensor *sensor : sensors)
+    {
         result = sensor->handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
 
-    if (ina219Sensor.hasSensor()) {
+    if (ina219Sensor.hasSensor())
+    {
         result = ina219Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
-    if (ina260Sensor.hasSensor()) {
+    if (ina260Sensor.hasSensor())
+    {
         result = ina260Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
-    if (ina3221Sensor.hasSensor()) {
+    if (ina3221Sensor.hasSensor())
+    {
         result = ina3221Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
-    if (max17048Sensor.hasSensor()) {
+    if (max17048Sensor.hasSensor())
+    {
         result = max17048Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
