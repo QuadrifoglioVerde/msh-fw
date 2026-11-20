@@ -486,25 +486,15 @@ int32_t EnvironmentTelemetryModule::runOnce()
             transmitHistory ? transmitHistory->getLastSentToMeshMillis(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY) : 0;
         if (((lastTelemetry == 0) || immediateSendRequested ||
              !Throttle::isWithinTimespanMs(
-                 lastTelemetry, Default::getConfiguredOrDefaultMsScaled(moduleConfig.telemetry.environment_update_interval,
-                                                                        default_telemetry_broadcast_interval_secs, numOnlineNodes,
-                                                                        TrafficType::TELEMETRY))) &&
+                 lastTelemetry, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
+                                                                  default_telemetry_broadcast_interval_secs))) &&
             airTime->isTxAllowedChannelUtil(config.device.role != meshtastic_Config_DeviceConfig_Role_SENSOR) &&
             airTime->isTxAllowedAirUtil())
         {
-            LOG_INFO("QV: Send Tele to ALL");
             sendTelemetry();
             immediateSendRequested = false;
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY);
-            lastSentToMqtt = Time::skipZero(Time::getMillis());
-        }
-        else if (!Throttle::isWithinTimespanMs(lastSentToMqtt, Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
-                                                                                                 default_telemetry_broadcast_interval_secs)))
-        {
-            LOG_INFO("QV: Send Tele to MQTT only");
-            sendTelemetry(NODENUM_BROADCAST_NO_LORA); // Send to MQTT only
-            lastSentToMqtt = Time::skipZero(Time::getMillis());
         }
         else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                  (service->isToPhoneQueueEmpty()))

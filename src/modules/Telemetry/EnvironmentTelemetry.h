@@ -29,8 +29,9 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
         CallbackObserver<EnvironmentTelemetryModule, const meshtastic::Status *>(this,
                                                                                  &EnvironmentTelemetryModule::handleStatusUpdate);
 
-  public:
-    enum class DisplaySource : uint8_t {
+public:
+    enum class DisplaySource : uint8_t
+    {
         LocalSensor = 0,
         Mesh = 1,
         FavoriteNodesOnly = 2,
@@ -64,7 +65,7 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
         immediateSendRequestedAtMs = millis();
     }
 
-  protected:
+protected:
     /** Called to handle a particular incoming message
     @return true if you've guaranteed you've handled this message and no other handlers should be considered for it
     */
@@ -86,7 +87,7 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
 
     void i2cScanFinished(ScanI2C *i2cScanner);
 
-  private:
+private:
     void clearMeasurementPacket();
     bool refreshLocalMeasurementPacket();
     void refreshDisplayedMeasurement();
@@ -101,7 +102,6 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
     uint32_t lastLocalDisplayRefreshMs = 0;
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute
     uint32_t lastSentToPhone = 0;
-    uint32_t lastSentToMqtt = 0;
 };
 
 #endif
